@@ -12,6 +12,10 @@ pipeline {
         echo 'Task: Validate code with unit tests and verify modules work together with integration tests.'
         echo 'Tool(s): NUnit for unit tests, Mocha for integration tests'
       }
+
+      stage('bananas')
+      steps {
+        echo'Test'
     }
     stage('Static Code Review') {
       steps {
@@ -45,3 +49,4 @@ pipeline {
     }
   }
 }
+
