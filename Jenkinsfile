@@ -14,6 +14,13 @@ pipeline {
       }
     }
 
+        stage('Testing123') {
+      steps {
+        echo 'Task: See, it works..'
+        echo 'Tool(s): NUnit for unit tests, Mocha for integration tests'
+      }
+    }
+
       stage('bananas'){
       steps {
         echo'Test'
@@ -51,5 +58,6 @@ pipeline {
     }
   }
 }
+
 
 
