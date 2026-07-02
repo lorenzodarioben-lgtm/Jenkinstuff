@@ -1,0 +1,29 @@
+{
+  "name": "jenkins-cicd-pipeline",
+  "version": "1.0.0",
+  "description": "Jenkins CI/CD pipeline for a containerized Node.js service.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "lint": "node scripts/lint.js",
+    "test": "node --test test/*.test.js",
+    "smoke": "node scripts/smoke-test.js",
+    "smoke:container": "node scripts/container-smoke-test.js",
+    "audit": "npm audit --audit-level=moderate --omit=dev",
+    "docker:build": "docker build -t jenkins-cicd-pipeline:local .",
+    "ci": "npm run lint && npm test && npm run smoke && npm run audit"
+  },
+  "keywords": [
+    "jenkins",
+    "ci-cd",
+    "devops",
+    "docker",
+    "nodejs"
+  ],
+  "author": "Lorenzo Dario",
+  "license": "MIT"
+}
