@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  verify:
+    name: Verify service, image, and pipeline assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Static analysis
+        run: npm run lint
+
+      - name: Automated tests
+        run: npm test
+
+      - name: Smoke test
+        run: npm run smoke
+
+      - name: Dependency audit
+        run: npm run audit
+
+      - name: Build container image
+        run: docker build -t jenkins-cicd-pipeline:ci .
+
+      - name: Container smoke test
+        run: npm run smoke:container -- jenkins-cicd-pipeline:ci
+
+      - name: Upload verification report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-report
+          path: reports/smoke-test.json
+          if-no-files-found: ignore
