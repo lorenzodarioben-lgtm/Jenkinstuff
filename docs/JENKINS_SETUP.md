@@ -16,7 +16,7 @@ Install these on the Jenkins agent:
 Create a Multibranch Pipeline or Pipeline from SCM job:
 
 1. Source: Git.
-2. Repository URL: `https://github.com/lorenzodarioben-lgtm/Jenkinstuff.git`
+2. Repository URL: `https://github.com/lorenzodarioben-lgtm/jenkins-cicd-pipeline.git`
 3. Branch: `main` or a feature branch.
 4. Script path: `Jenkinsfile`.
 
