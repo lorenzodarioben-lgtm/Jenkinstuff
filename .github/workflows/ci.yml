@@ -51,5 +51,5 @@ jobs:
         if: always()
         with:
           name: verification-report
-          path: reports/smoke-test.json
+          path: reports/*.json
           if-no-files-found: ignore

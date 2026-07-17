@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 const image = process.argv[2] || process.env.DOCKER_IMAGE || 'jenkins-cicd-pipeline:local';
 const containerName = process.env.CONTAINER_NAME || `jenkins-cicd-pipeline-smoke-${Date.now()}`;
@@ -82,6 +83,17 @@ try {
   if (!Array.isArray(pipeline.stages) || pipeline.stages.length === 0) {
     throw new Error('Pipeline endpoint did not return any stages');
   }
+
+  const report = {
+    image,
+    verifiedAt: new Date().toISOString(),
+    healthStatus: health.status,
+    testedEndpoints: ['/health', '/api/pipeline'],
+    pipelineStageCount: pipeline.stages.length
+  };
+
+  await mkdir('reports', { recursive: true });
+  await writeFile('reports/container-smoke-test.json', `${JSON.stringify(report, null, 2)}\n`);
 
   console.log(`Container smoke test passed for ${image}`);
   console.log(`Container: ${containerId}`);
