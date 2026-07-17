@@ -99,6 +99,7 @@ On Windows PowerShell, use `npm.cmd` if local execution policy blocks the `npm` 
 The Jenkins pipeline is defined in [Jenkinsfile](Jenkinsfile). Jenkins setup notes are in [docs/JENKINS_SETUP.md](docs/JENKINS_SETUP.md).
 
 Set `BUILD_CONTAINER=false` on agents that do not have Docker access. With Docker enabled, the pipeline builds the image and runs the container smoke test.
+Builds are stopped after 20 minutes to prevent stuck agents.
 
 ## Docker Usage
 
