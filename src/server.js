@@ -1,14 +1,5 @@
 import { createServer } from './app.js';
-
-function parsePort(value) {
-  const port = Number.parseInt(value, 10);
-
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error(`Invalid PORT value: ${value}`);
-  }
-
-  return port;
-}
+import { parsePort } from './config.js';
 
 const port = parsePort(process.env.PORT || '3000');
 const host = process.env.HOST || '0.0.0.0';

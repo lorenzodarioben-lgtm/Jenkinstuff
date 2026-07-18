@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, pipelineStages } from '../src/app.js';
+import { parsePort } from '../src/config.js';
 
 async function startTestServer(t) {
   const server = createServer({
@@ -87,4 +88,16 @@ test('unknown routes return a JSON 404 response', async (t) => {
   assert.equal(response.status, 404);
   assert.equal(body.error, 'Not found');
   assert.equal(body.path, '/missing');
+});
+
+test('PORT validation accepts whole port numbers in range', () => {
+  assert.equal(parsePort('1'), 1);
+  assert.equal(parsePort('3000'), 3000);
+  assert.equal(parsePort('65535'), 65535);
+});
+
+test('PORT validation rejects malformed and out-of-range values', () => {
+  for (const value of ['0', '65536', '-1', '3000abc', '3000.5']) {
+    assert.throws(() => parsePort(value), /Invalid PORT value/);
+  }
 });
