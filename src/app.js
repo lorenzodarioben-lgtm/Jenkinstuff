@@ -58,10 +58,11 @@ export const pipelineStages = [
   }
 ];
 
-function sendJson(response, statusCode, payload) {
+function sendJson(response, statusCode, payload, headers = {}) {
   response.writeHead(statusCode, {
     'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store'
+    'cache-control': 'no-store',
+    ...headers
   });
   response.end(JSON.stringify(payload, null, 2));
 }
@@ -88,6 +89,8 @@ export function createServer(options = {}) {
       sendJson(response, 405, {
         error: 'Method not allowed',
         allowedMethods: ['GET']
+      }, {
+        allow: 'GET'
       });
       return;
     }

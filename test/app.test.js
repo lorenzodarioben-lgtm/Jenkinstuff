@@ -76,6 +76,7 @@ test('unsupported methods return a JSON 405 response', async (t) => {
   assert.equal(response.status, 405);
   assert.equal(body.error, 'Method not allowed');
   assert.deepEqual(body.allowedMethods, ['GET']);
+  assert.equal(response.headers.get('allow'), 'GET');
 });
 
 test('unknown routes return a JSON 404 response', async (t) => {
