@@ -58,6 +58,31 @@ async function waitForEndpoint(url, attempts = 20) {
   throw lastError;
 }
 
+async function waitForContainerHealth(containerName, attempts = 20) {
+  let lastStatus = 'unknown';
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    lastStatus = runDocker([
+      'inspect',
+      '--format',
+      '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}',
+      containerName
+    ]);
+
+    if (lastStatus === 'healthy') {
+      return lastStatus;
+    }
+
+    if (lastStatus === 'unhealthy') {
+      throw new Error(`Container health check reported ${lastStatus}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  throw new Error(`Container did not become healthy. Last status: ${lastStatus}`);
+}
+
 runDocker(['rm', '--force', containerName], { allowFailure: true });
 
 try {
@@ -71,6 +96,7 @@ try {
     image
   ]);
 
+  const containerHealthStatus = await waitForContainerHealth(containerName);
   const publishedPort = parsePublishedPort(runDocker(['port', containerName, '3000/tcp']));
   const baseUrl = `http://127.0.0.1:${publishedPort}`;
   const health = await waitForEndpoint(`${baseUrl}/health`);
@@ -87,6 +113,7 @@ try {
   const report = {
     image,
     verifiedAt: new Date().toISOString(),
+    containerHealthStatus,
     healthStatus: health.status,
     testedEndpoints: ['/health', '/api/pipeline'],
     pipelineStageCount: pipeline.stages.length
