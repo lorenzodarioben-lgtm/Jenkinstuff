@@ -71,7 +71,7 @@ function sendJson(response, statusCode, payload, headers = {}, includeBody = tru
   response.end(includeBody ? JSON.stringify(payload, null, 2) : undefined);
 }
 
-function buildHealthPayload(startedAt) {
+function buildHealthPayload(startedAt, commit) {
   return {
     status: 'ok',
     service: packageJson.name,
@@ -79,7 +79,7 @@ function buildHealthPayload(startedAt) {
     uptimeSeconds: Math.round(process.uptime()),
     startedAt: startedAt.toISOString(),
     checkedAt: new Date().toISOString(),
-    commit: process.env.GIT_COMMIT || process.env.COMMIT_SHA || 'local'
+    commit
   };
 }
 
@@ -95,6 +95,7 @@ function resolveRequestId(request) {
 
 export function createServer(options = {}) {
   const startedAt = options.startedAt ?? new Date();
+  const commit = options.commit ?? process.env.GIT_COMMIT ?? process.env.COMMIT_SHA ?? 'local';
 
   return createHttpServer((request, response) => {
     const requestUrl = new URL(request.url ?? '/', 'http://localhost');
@@ -128,7 +129,7 @@ export function createServer(options = {}) {
     }
 
     if (path === '/health') {
-      sendResponse(200, buildHealthPayload(startedAt));
+      sendResponse(200, buildHealthPayload(startedAt, commit));
       return;
     }
 
@@ -155,7 +156,8 @@ export function createServer(options = {}) {
         name: packageJson.name,
         version: packageJson.version,
         node: process.version,
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        commit
       });
       return;
     }

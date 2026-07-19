@@ -5,7 +5,8 @@ import { parsePort } from '../src/config.js';
 
 async function startTestServer(t) {
   const server = createServer({
-    startedAt: new Date('2026-01-01T00:00:00.000Z')
+    startedAt: new Date('2026-01-01T00:00:00.000Z'),
+    commit: 'test-commit'
   });
 
   await new Promise((resolve) => {
@@ -30,6 +31,7 @@ test('health endpoint returns operational metadata', async (t) => {
   assert.equal(body.service, 'jenkins-cicd-pipeline');
   assert.equal(body.startedAt, '2026-01-01T00:00:00.000Z');
   assert.match(body.checkedAt, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(body.commit, 'test-commit');
 });
 
 test('pipeline endpoint exposes the expected pipeline stages', async (t) => {
@@ -99,6 +101,7 @@ test('version endpoint returns runtime metadata', async (t) => {
   assert.equal(body.name, 'jenkins-cicd-pipeline');
   assert.match(body.node, /^v\d+\./);
   assert.equal(body.environment, 'development');
+  assert.equal(body.commit, 'test-commit');
 });
 
 test('endpoint paths accept a trailing slash', async (t) => {
