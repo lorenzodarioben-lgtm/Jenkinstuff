@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,6 +18,7 @@ jobs:
   verify:
     name: Verify service, image, and pipeline assets
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -39,12 +41,14 @@ jobs:
 
       - name: Smoke test
         run: npm run smoke
+        env:
+          GIT_COMMIT: ${{ github.sha }}
 
       - name: Dependency audit
         run: npm run audit
 
       - name: Build container image
-        run: docker build -t jenkins-cicd-pipeline:ci .
+        run: docker build --build-arg VCS_REF=${{ github.sha }} -t jenkins-cicd-pipeline:ci .
 
       - name: Container smoke test
         run: npm run smoke:container -- jenkins-cicd-pipeline:ci
@@ -56,3 +60,4 @@ jobs:
           name: verification-report
           path: reports/*.json
           if-no-files-found: ignore
+          retention-days: 14
