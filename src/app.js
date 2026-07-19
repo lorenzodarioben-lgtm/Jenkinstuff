@@ -1,4 +1,5 @@
 import { createServer as createHttpServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 const packageJson = JSON.parse(
@@ -82,11 +83,23 @@ function buildHealthPayload(startedAt) {
   };
 }
 
+function resolveRequestId(request) {
+  const requestId = request.headers['x-request-id'];
+
+  if (typeof requestId === 'string' && /^[A-Za-z0-9._-]{1,128}$/.test(requestId)) {
+    return requestId;
+  }
+
+  return randomUUID();
+}
+
 export function createServer(options = {}) {
   const startedAt = options.startedAt ?? new Date();
 
   return createHttpServer((request, response) => {
     const requestUrl = new URL(request.url ?? '/', 'http://localhost');
+
+    response.setHeader('x-request-id', resolveRequestId(request));
 
     if (request.method !== 'GET') {
       sendJson(response, 405, {

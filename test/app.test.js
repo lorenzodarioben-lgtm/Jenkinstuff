@@ -67,6 +67,28 @@ test('responses include JSON and browser-safety headers', async (t) => {
   assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
 });
 
+test('responses retain a valid caller request identifier', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const response = await fetch(`${baseUrl}/health`, {
+    headers: {
+      'x-request-id': 'build-123.request_456'
+    }
+  });
+
+  assert.equal(response.headers.get('x-request-id'), 'build-123.request_456');
+});
+
+test('responses generate a request identifier when the supplied value is invalid', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const response = await fetch(`${baseUrl}/health`, {
+    headers: {
+      'x-request-id': 'not valid'
+    }
+  });
+
+  assert.match(response.headers.get('x-request-id'), /^[0-9a-f-]{36}$/);
+});
+
 test('version endpoint returns runtime metadata', async (t) => {
   const baseUrl = await startTestServer(t);
   const response = await fetch(`${baseUrl}/api/version`);
