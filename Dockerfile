@@ -1,14 +1,20 @@
 FROM node:22-alpine
 
+ARG VCS_REF=local
+
+LABEL org.opencontainers.image.title="jenkins-cicd-pipeline" \
+  org.opencontainers.image.description="Containerized Node.js service with Jenkins CI/CD validation" \
+  org.opencontainers.image.revision="${VCS_REF}"
+
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
-COPY src ./src
+COPY --chown=node:node src ./src
 
 USER node
 
