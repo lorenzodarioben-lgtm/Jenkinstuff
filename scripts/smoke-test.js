@@ -1,5 +1,5 @@
-import { mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from '../src/app.js';
+import { writeJsonReport } from './report.js';
 
 async function startServer() {
   const server = createServer();
@@ -48,8 +48,7 @@ try {
     stageCount: pipeline.stages.length
   };
 
-  await mkdir('reports', { recursive: true });
-  await writeFile('reports/smoke-test.json', `${JSON.stringify(report, null, 2)}\n`);
+  await writeJsonReport('smoke-test.json', report);
 
   console.log(`Smoke test passed against ${baseUrl}`);
 } finally {
