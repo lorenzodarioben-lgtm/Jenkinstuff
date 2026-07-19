@@ -100,6 +100,15 @@ test('version endpoint returns runtime metadata', async (t) => {
   assert.equal(body.environment, 'development');
 });
 
+test('endpoint paths accept a trailing slash', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const response = await fetch(`${baseUrl}/api/pipeline/`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.stageCount, pipelineStages.length);
+});
+
 test('unsupported methods return a JSON 405 response', async (t) => {
   const baseUrl = await startTestServer(t);
   const response = await fetch(`${baseUrl}/health`, {

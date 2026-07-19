@@ -98,6 +98,9 @@ export function createServer(options = {}) {
 
   return createHttpServer((request, response) => {
     const requestUrl = new URL(request.url ?? '/', 'http://localhost');
+    const path = requestUrl.pathname === '/'
+      ? '/'
+      : requestUrl.pathname.replace(/\/+$/, '');
 
     response.setHeader('x-request-id', resolveRequestId(request));
 
@@ -111,7 +114,7 @@ export function createServer(options = {}) {
       return;
     }
 
-    if (requestUrl.pathname === '/') {
+    if (path === '/') {
       sendJson(response, 200, {
         service: packageJson.name,
         description: packageJson.description,
@@ -121,12 +124,12 @@ export function createServer(options = {}) {
       return;
     }
 
-    if (requestUrl.pathname === '/health') {
+    if (path === '/health') {
       sendJson(response, 200, buildHealthPayload(startedAt));
       return;
     }
 
-    if (requestUrl.pathname === '/api/pipeline') {
+    if (path === '/api/pipeline') {
       sendJson(response, 200, {
         service: packageJson.name,
         stageCount: pipelineStages.length,
@@ -135,7 +138,7 @@ export function createServer(options = {}) {
       return;
     }
 
-    if (requestUrl.pathname === '/api/version') {
+    if (path === '/api/version') {
       sendJson(response, 200, {
         name: packageJson.name,
         version: packageJson.version,
@@ -147,7 +150,7 @@ export function createServer(options = {}) {
 
     sendJson(response, 404, {
       error: 'Not found',
-      path: requestUrl.pathname
+      path
     });
   });
 }
