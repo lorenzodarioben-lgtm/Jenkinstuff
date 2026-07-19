@@ -119,13 +119,22 @@ export function createServer(options = {}) {
         service: packageJson.name,
         description: packageJson.description,
         version: packageJson.version,
-        endpoints: ['/health', '/api/pipeline', '/api/version']
+        endpoints: ['/health', '/ready', '/api/pipeline', '/api/version']
       });
       return;
     }
 
     if (path === '/health') {
       sendJson(response, 200, buildHealthPayload(startedAt));
+      return;
+    }
+
+    if (path === '/ready') {
+      sendJson(response, 200, {
+        status: 'ready',
+        service: packageJson.name,
+        checkedAt: new Date().toISOString()
+      });
       return;
     }
 

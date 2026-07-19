@@ -53,6 +53,7 @@ test('root endpoint documents available endpoints', async (t) => {
 
   assert.equal(response.status, 200);
   assert.ok(body.endpoints.includes('/health'));
+  assert.ok(body.endpoints.includes('/ready'));
   assert.ok(body.endpoints.includes('/api/pipeline'));
 });
 
@@ -107,6 +108,17 @@ test('endpoint paths accept a trailing slash', async (t) => {
 
   assert.equal(response.status, 200);
   assert.equal(body.stageCount, pipelineStages.length);
+});
+
+test('readiness endpoint confirms the service can accept traffic', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const response = await fetch(`${baseUrl}/ready`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.status, 'ready');
+  assert.equal(body.service, 'jenkins-cicd-pipeline');
+  assert.match(body.checkedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 
 test('unsupported methods return a JSON 405 response', async (t) => {
