@@ -23,20 +23,29 @@ async function fetchJson(baseUrl, path) {
     throw new Error(`${path} returned ${response.status}: ${JSON.stringify(body)}`);
   }
 
-  return body;
+  return {
+    body,
+    requestId: response.headers.get('x-request-id'),
+    status: response.status
+  };
 }
 
 const { server, baseUrl } = await startServer();
 
 try {
   const health = await fetchJson(baseUrl, '/health');
+  const readiness = await fetchJson(baseUrl, '/ready');
   const pipeline = await fetchJson(baseUrl, '/api/pipeline');
 
-  if (health.status !== 'ok') {
-    throw new Error(`Health endpoint returned status ${health.status}`);
+  if (health.body.status !== 'ok') {
+    throw new Error(`Health endpoint returned status ${health.body.status}`);
   }
 
-  if (!Array.isArray(pipeline.stages) || pipeline.stages.length === 0) {
+  if (readiness.body.status !== 'ready') {
+    throw new Error(`Readiness endpoint returned status ${readiness.body.status}`);
+  }
+
+  if (!Array.isArray(pipeline.body.stages) || pipeline.body.stages.length === 0) {
     throw new Error('Pipeline endpoint did not return any stages');
   }
 
@@ -44,8 +53,12 @@ try {
     status: 'passed',
     checkedAt: new Date().toISOString(),
     baseUrl,
-    endpoints: ['/health', '/api/pipeline'],
-    stageCount: pipeline.stages.length
+    endpoints: [
+      { path: '/health', requestId: health.requestId, status: health.status },
+      { path: '/ready', requestId: readiness.requestId, status: readiness.status },
+      { path: '/api/pipeline', requestId: pipeline.requestId, status: pipeline.status }
+    ],
+    stageCount: pipeline.body.stages.length
   };
 
   await writeJsonReport('smoke-test.json', report);
