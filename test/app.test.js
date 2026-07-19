@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, pipelineStages } from '../src/app.js';
-import { parsePort } from '../src/config.js';
+import { getRuntimeConfig, parseHost, parsePort } from '../src/config.js';
 
 async function startTestServer(t) {
   const server = createServer({
@@ -168,4 +168,27 @@ test('PORT validation rejects malformed and out-of-range values', () => {
   for (const value of ['0', '65536', '-1', '3000abc', '3000.5']) {
     assert.throws(() => parsePort(value), /Invalid PORT value/);
   }
+});
+
+test('HOST validation accepts supported bind addresses', () => {
+  assert.equal(parseHost('0.0.0.0'), '0.0.0.0');
+  assert.equal(parseHost('localhost'), 'localhost');
+  assert.equal(parseHost('::1'), '::1');
+});
+
+test('HOST validation rejects malformed bind addresses', () => {
+  for (const value of ['', '127.0.0.1 ', 'host name', 'http://localhost']) {
+    assert.throws(() => parseHost(value), /Invalid HOST value/);
+  }
+});
+
+test('runtime configuration applies environment values and defaults', () => {
+  assert.deepEqual(getRuntimeConfig({ PORT: '8080', HOST: '127.0.0.1' }), {
+    port: 8080,
+    host: '127.0.0.1'
+  });
+  assert.deepEqual(getRuntimeConfig({}), {
+    port: 3000,
+    host: '0.0.0.0'
+  });
 });

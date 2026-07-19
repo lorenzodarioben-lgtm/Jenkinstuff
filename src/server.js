@@ -1,8 +1,7 @@
 import { createServer } from './app.js';
-import { parsePort } from './config.js';
+import { getRuntimeConfig } from './config.js';
 
-const port = parsePort(process.env.PORT || '3000');
-const host = process.env.HOST || '0.0.0.0';
+const { host, port } = getRuntimeConfig();
 const server = createServer();
 
 server.listen(port, host, () => {

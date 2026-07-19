@@ -13,3 +13,20 @@ export function parsePort(value) {
 
   return port;
 }
+
+export function parseHost(value) {
+  const host = String(value);
+
+  if (!/^[A-Za-z0-9._:-]+$/.test(host)) {
+    throw new Error(`Invalid HOST value: ${value}`);
+  }
+
+  return host;
+}
+
+export function getRuntimeConfig(environment = process.env) {
+  return {
+    port: parsePort(environment.PORT || '3000'),
+    host: parseHost(environment.HOST || '0.0.0.0')
+  };
+}
