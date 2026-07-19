@@ -130,8 +130,19 @@ test('unsupported methods return a JSON 405 response', async (t) => {
 
   assert.equal(response.status, 405);
   assert.equal(body.error, 'Method not allowed');
-  assert.deepEqual(body.allowedMethods, ['GET']);
-  assert.equal(response.headers.get('allow'), 'GET');
+  assert.deepEqual(body.allowedMethods, ['GET', 'HEAD']);
+  assert.equal(response.headers.get('allow'), 'GET, HEAD');
+});
+
+test('HEAD requests return endpoint metadata without a response body', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const response = await fetch(`${baseUrl}/health`, {
+    method: 'HEAD'
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'application/json; charset=utf-8');
+  assert.equal(await response.text(), '');
 });
 
 test('unknown routes return a JSON 404 response', async (t) => {

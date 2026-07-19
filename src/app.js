@@ -59,7 +59,7 @@ export const pipelineStages = [
   }
 ];
 
-function sendJson(response, statusCode, payload, headers = {}) {
+function sendJson(response, statusCode, payload, headers = {}, includeBody = true) {
   response.writeHead(statusCode, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
@@ -68,7 +68,7 @@ function sendJson(response, statusCode, payload, headers = {}) {
     'referrer-policy': 'no-referrer',
     ...headers
   });
-  response.end(JSON.stringify(payload, null, 2));
+  response.end(includeBody ? JSON.stringify(payload, null, 2) : undefined);
 }
 
 function buildHealthPayload(startedAt) {
@@ -103,19 +103,22 @@ export function createServer(options = {}) {
       : requestUrl.pathname.replace(/\/+$/, '');
 
     response.setHeader('x-request-id', resolveRequestId(request));
+    const sendResponse = (statusCode, payload, headers) => {
+      sendJson(response, statusCode, payload, headers, request.method !== 'HEAD');
+    };
 
-    if (request.method !== 'GET') {
-      sendJson(response, 405, {
+    if (!['GET', 'HEAD'].includes(request.method)) {
+      sendResponse(405, {
         error: 'Method not allowed',
-        allowedMethods: ['GET']
+        allowedMethods: ['GET', 'HEAD']
       }, {
-        allow: 'GET'
+        allow: 'GET, HEAD'
       });
       return;
     }
 
     if (path === '/') {
-      sendJson(response, 200, {
+      sendResponse(200, {
         service: packageJson.name,
         description: packageJson.description,
         version: packageJson.version,
@@ -125,12 +128,12 @@ export function createServer(options = {}) {
     }
 
     if (path === '/health') {
-      sendJson(response, 200, buildHealthPayload(startedAt));
+      sendResponse(200, buildHealthPayload(startedAt));
       return;
     }
 
     if (path === '/ready') {
-      sendJson(response, 200, {
+      sendResponse(200, {
         status: 'ready',
         service: packageJson.name,
         checkedAt: new Date().toISOString()
@@ -139,7 +142,7 @@ export function createServer(options = {}) {
     }
 
     if (path === '/api/pipeline') {
-      sendJson(response, 200, {
+      sendResponse(200, {
         service: packageJson.name,
         stageCount: pipelineStages.length,
         stages: pipelineStages
@@ -148,7 +151,7 @@ export function createServer(options = {}) {
     }
 
     if (path === '/api/version') {
-      sendJson(response, 200, {
+      sendResponse(200, {
         name: packageJson.name,
         version: packageJson.version,
         node: process.version,
@@ -157,7 +160,7 @@ export function createServer(options = {}) {
       return;
     }
 
-    sendJson(response, 404, {
+    sendResponse(404, {
       error: 'Not found',
       path
     });
