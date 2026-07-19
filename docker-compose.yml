@@ -3,6 +3,12 @@ services:
     build:
       context: .
     image: jenkins-cicd-pipeline:local
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
     ports:
       - "${HOST_PORT:-3000}:3000"
     environment:
