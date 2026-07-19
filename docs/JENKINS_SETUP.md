@@ -29,10 +29,10 @@ Create a Multibranch Pipeline or Pipeline from SCM job:
 ## Expected Flow
 
 1. Jenkins checks out the repository.
-2. Jenkins records the Node.js and npm versions available on the agent.
+2. Jenkins records the checked-out commit and the Node.js and npm versions available on the agent.
 3. `npm ci` installs dependencies from the lockfile.
 4. `npm run lint`, `npm test`, and `npm run smoke` validate the service.
-5. If Docker is enabled, Jenkins builds the image and runs `npm run smoke:container`.
+5. If Docker is enabled, Jenkins builds the image with its commit revision and runs `npm run smoke:container` after Docker reports the container healthy.
 6. `npm run audit` checks production dependencies and marks the build unstable if the audit fails.
 7. Smoke-test reports are archived when present.
 
@@ -44,4 +44,5 @@ Create a Multibranch Pipeline or Pipeline from SCM job:
 | `npm ci` fails | Confirm `package-lock.json` is committed and npm can read the workspace. |
 | Docker build fails | Check Docker daemon access for the Jenkins user. |
 | Container smoke test fails | Inspect the container logs printed by `scripts/container-smoke-test.js`. |
+| A response cannot be correlated to a build | Use the `X-Request-Id` in the response together with the `commit` field from `/health` or `/api/version`. |
 | Security audit marks unstable | Review the audit output and update affected dependencies before treating the build as releasable. |

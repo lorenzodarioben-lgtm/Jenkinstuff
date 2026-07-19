@@ -65,8 +65,17 @@ npm start
 Useful endpoints:
 
 - `GET /health`
+- `GET /ready`
 - `GET /api/pipeline`
 - `GET /api/version`
+
+## Runtime Contract
+
+All endpoints return JSON, disable response caching, and include browser-safety headers. A valid caller-supplied `X-Request-Id` is returned in the response; otherwise the service generates one for request-to-log correlation.
+
+`GET` and `HEAD` are supported. `HEAD` returns the same status and headers without a response body. Endpoint paths also accept a trailing slash.
+
+`/health` reports liveness metadata, while `/ready` indicates that the service is ready to receive traffic. Both `/health` and `/api/version` include the build revision when `GIT_COMMIT` or `COMMIT_SHA` is available.
 
 ## Local Validation
 
@@ -118,6 +127,8 @@ docker compose up --build
 
 Set `HOST_PORT` to use a host port other than `3000`.
 
+The Compose service runs with a read-only root filesystem, a writable in-memory `/tmp`, and `no-new-privileges` enabled. The image itself runs as the built-in non-root `node` user.
+
 ## Repository Structure
 
 ```text
@@ -138,6 +149,7 @@ Set `HOST_PORT` to use a host port other than `3000`.
 - The service uses Node.js built-in modules to keep the runtime dependency graph small.
 - The custom lint script performs repository hygiene and JavaScript syntax checks without adding a formatter or linter dependency.
 - Docker images are built and verified locally, but they are not pushed to a container registry.
+- Smoke-test reports retain endpoint status and request identifiers; failed local smoke tests also write a failure report before exiting.
 - Docker Compose is used only for local runtime verification, not as a production deployment target.
 - The Jenkinsfile was written for a Node.js-capable Jenkins agent with optional Docker access.
 
