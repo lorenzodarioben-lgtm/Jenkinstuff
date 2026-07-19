@@ -6,6 +6,14 @@ def runCommand(String unixCommand, String windowsCommand = null) {
   }
 }
 
+def captureCommand(String unixCommand, String windowsCommand = null) {
+  if (isUnix()) {
+    return sh(returnStdout: true, script: unixCommand).trim()
+  }
+
+  return bat(returnStdout: true, script: windowsCommand ?: unixCommand).trim()
+}
+
 pipeline {
   agent any
 
@@ -28,6 +36,10 @@ pipeline {
     stage('Checkout') {
       steps {
         checkout scm
+        script {
+          env.GIT_COMMIT = captureCommand('git rev-parse HEAD', 'git rev-parse HEAD')
+          echo "Building revision ${env.GIT_COMMIT}"
+        }
       }
     }
 
@@ -81,8 +93,8 @@ pipeline {
       steps {
         script {
           runCommand(
-            "docker build --tag ${env.DOCKER_IMAGE} .",
-            'docker build --tag %DOCKER_IMAGE% .'
+            "docker build --build-arg VCS_REF=${env.GIT_COMMIT} --tag ${env.DOCKER_IMAGE} .",
+            'docker build --build-arg VCS_REF=%GIT_COMMIT% --tag %DOCKER_IMAGE% .'
           )
         }
       }
