@@ -62,6 +62,9 @@ function sendJson(response, statusCode, payload, headers = {}) {
   response.writeHead(statusCode, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'DENY',
+    'referrer-policy': 'no-referrer',
     ...headers
   });
   response.end(JSON.stringify(payload, null, 2));

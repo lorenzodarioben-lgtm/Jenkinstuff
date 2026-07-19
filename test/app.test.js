@@ -56,6 +56,17 @@ test('root endpoint documents available endpoints', async (t) => {
   assert.ok(body.endpoints.includes('/api/pipeline'));
 });
 
+test('responses include JSON and browser-safety headers', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const response = await fetch(`${baseUrl}/health`);
+
+  assert.equal(response.headers.get('content-type'), 'application/json; charset=utf-8');
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(response.headers.get('x-frame-options'), 'DENY');
+  assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+});
+
 test('version endpoint returns runtime metadata', async (t) => {
   const baseUrl = await startTestServer(t);
   const response = await fetch(`${baseUrl}/api/version`);
