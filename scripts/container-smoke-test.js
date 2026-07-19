@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { writeJsonReport } from './report.js';
 
 const image = process.argv[2] || process.env.DOCKER_IMAGE || 'jenkins-cicd-pipeline:local';
 const containerName = process.env.CONTAINER_NAME || `jenkins-cicd-pipeline-smoke-${Date.now()}`;
@@ -40,7 +40,11 @@ async function fetchJson(url) {
     throw new Error(`${url} returned ${response.status}: ${JSON.stringify(body)}`);
   }
 
-  return body;
+  return {
+    body,
+    requestId: response.headers.get('x-request-id'),
+    status: response.status
+  };
 }
 
 async function waitForEndpoint(url, attempts = 20) {
@@ -102,30 +106,33 @@ try {
   const health = await waitForEndpoint(`${baseUrl}/health`);
   const pipeline = await fetchJson(`${baseUrl}/api/pipeline`);
 
-  if (health.status !== 'ok') {
-    throw new Error(`Health endpoint returned status ${health.status}`);
+  if (health.body.status !== 'ok') {
+    throw new Error(`Health endpoint returned status ${health.body.status}`);
   }
 
-  if (!Array.isArray(pipeline.stages) || pipeline.stages.length === 0) {
+  if (!Array.isArray(pipeline.body.stages) || pipeline.body.stages.length === 0) {
     throw new Error('Pipeline endpoint did not return any stages');
   }
 
   const report = {
+    containerId,
     image,
     verifiedAt: new Date().toISOString(),
     containerHealthStatus,
-    healthStatus: health.status,
-    testedEndpoints: ['/health', '/api/pipeline'],
-    pipelineStageCount: pipeline.stages.length
+    healthStatus: health.body.status,
+    testedEndpoints: [
+      { path: '/health', requestId: health.requestId, status: health.status },
+      { path: '/api/pipeline', requestId: pipeline.requestId, status: pipeline.status }
+    ],
+    pipelineStageCount: pipeline.body.stages.length
   };
 
-  await mkdir('reports', { recursive: true });
-  await writeFile('reports/container-smoke-test.json', `${JSON.stringify(report, null, 2)}\n`);
+  await writeJsonReport('container-smoke-test.json', report);
 
   console.log(`Container smoke test passed for ${image}`);
   console.log(`Container: ${containerId}`);
   console.log(`Base URL: ${baseUrl}`);
-  console.log(`Pipeline stages: ${pipeline.stages.length}`);
+  console.log(`Pipeline stages: ${pipeline.body.stages.length}`);
 } finally {
   const logs = runDocker(['logs', '--tail', '50', containerName], { allowFailure: true });
 
