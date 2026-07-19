@@ -31,11 +31,15 @@ async function fetchJson(baseUrl, path) {
 }
 
 const { server, baseUrl } = await startServer();
+const endpoints = [];
 
 try {
   const health = await fetchJson(baseUrl, '/health');
+  endpoints.push({ path: '/health', requestId: health.requestId, status: health.status });
   const readiness = await fetchJson(baseUrl, '/ready');
+  endpoints.push({ path: '/ready', requestId: readiness.requestId, status: readiness.status });
   const pipeline = await fetchJson(baseUrl, '/api/pipeline');
+  endpoints.push({ path: '/api/pipeline', requestId: pipeline.requestId, status: pipeline.status });
 
   if (health.body.status !== 'ok') {
     throw new Error(`Health endpoint returned status ${health.body.status}`);
@@ -53,17 +57,22 @@ try {
     status: 'passed',
     checkedAt: new Date().toISOString(),
     baseUrl,
-    endpoints: [
-      { path: '/health', requestId: health.requestId, status: health.status },
-      { path: '/ready', requestId: readiness.requestId, status: readiness.status },
-      { path: '/api/pipeline', requestId: pipeline.requestId, status: pipeline.status }
-    ],
+    endpoints,
     stageCount: pipeline.body.stages.length
   };
 
   await writeJsonReport('smoke-test.json', report);
 
   console.log(`Smoke test passed against ${baseUrl}`);
+} catch (error) {
+  await writeJsonReport('smoke-test.json', {
+    status: 'failed',
+    checkedAt: new Date().toISOString(),
+    baseUrl,
+    endpoints,
+    error: error instanceof Error ? error.message : String(error)
+  });
+  throw error;
 } finally {
   server.close();
 }
